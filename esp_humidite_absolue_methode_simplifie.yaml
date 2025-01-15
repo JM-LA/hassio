@@ -1,0 +1,243 @@
+esphome: # Nom du projet
+  name: calcul_humidite_absolue # Nom de l'ESP
+  platform: ESP8266 # Plateforme utilisée
+  board: nodemcuv2 # Type de carte utilisée, ici une NodeMCU v2
+
+wifi: # Configuration du WiFi
+  ssid: "votre_ssid" # Nom du réseau WiFi, à adapter en fonction de votre configuration
+  password: "votre_mot_de_passe" # Mot de passe du réseau WiFi, à adapter en fonction de votre configuration
+
+# Configuration des capteurs DHT
+sensor: # Déclaration des capteurs
+  - platform: dht # Type de capteur : DHT, pour les capteurs de température et d'humidité
+    pin: D1 # Broche GPIO à laquelle est connecté le capteur
+    temperature: # Déclaration de la température
+      name: "Température Capteur 1" # Nom de l'entité de température
+      id: temp1 # Identifiant de l'entité de température
+    humidity: # Déclaration de l'humidité relative
+      name: "Humidité Relative Capteur 1" # Nom de l'entité d'humidité relative
+      id: hum1 # Identifiant de l'entité d'humidité relative
+    update_interval: 60s # Intervalle de mise à jour des valeurs du capteur
+
+  - platform: dht
+    pin: D2
+    temperature:
+      name: "Température Capteur 2"
+      id: temp2
+    humidity:
+      name: "Humidité Relative Capteur 2"
+      id: hum2
+    update_interval: 60s
+
+  - platform: dht
+    pin: D3
+    temperature:
+      name: "Température Capteur 3"
+      id: temp3
+    humidity:
+      name: "Humidité Relative Capteur 3"
+      id: hum3
+    update_interval: 60s
+
+  - platform: dht
+    pin: D4
+    temperature:
+      name: "Température Capteur 4"
+      id: temp4
+    humidity:
+      name: "Humidité Relative Capteur 4"
+      id: hum4
+    update_interval: 60s
+
+  - platform: dht
+    pin: D5
+    temperature:
+      name: "Température Capteur 5"
+      id: temp5
+    humidity:
+      name: "Humidité Relative Capteur 5"
+      id: hum5
+    update_interval: 60s
+
+# Calcul de l'humidité absolue à partir des valeurs de température et d'humidité relative
+# Formule de calcul de l'humidité absolue : https://en.wikipedia.org/wiki/Absolute_humidity
+# Formule simplifiée : abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T)
+# Où T est la température en degrés Celsius, R est l'humidité relative en pourcentage
+# et abs_humidity est l'humidité absolue en g/m³
+# Les valeurs de température et d'humidité relative sont mises à jour toutes les 60 secondes
+# Le calcul de l'humidité absolue ne prends pas en comptes les variations de pression atmosphérique
+# Pour une précision optimale, il est recommandé de mesurer la pression atmosphérique et de l'intégrer dans le calcul
+# Soit en utilisant un capteur de pression atmosphérique, soit en récupérant les données d'une station météo locale
+# Ou bien en utilisant les méthodes de Rankine ou de Magnus-Tetens pour calculer la pression de vapeur saturante
+# et en déduire l'humidité absolue
+
+  - platform: template # Déclaration des entités de calcul de l'humidité absolue
+    name: "Humidité Absolue Capteur 1" # Nom de l'entité de calcul de l'humidité absolue
+    lambda: |- # Fonction lambda pour le calcul de l'humidité absolue
+      const float R = id(hum1).state; 
+      const float T = id(temp1).state;
+      const float abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T);
+      return abs_humidity;
+    update_interval: 60s
+
+  - platform: template
+    name: "Humidité Absolue Capteur 2"
+    lambda: |-
+      const float R = id(hum2).state;
+      const float T = id(temp2).state;
+      const float abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T);
+      return abs_humidity;
+    update_interval: 60s
+
+  - platform: template
+    name: "Humidité Absolue Capteur 3"
+    lambda: |-
+      const float R = id(hum3).state;
+      const float T = id(temp3).state;
+      const float abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T);
+      return abs_humidity;
+    update_interval: 60s
+
+  - platform: template
+    name: "Humidité Absolue Capteur 4"
+    lambda: |-
+      const float R = id(hum4).state;
+      const float T = id(temp4).state;
+      const float abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T);
+      return abs_humidity;
+    update_interval: 60s
+
+  - platform: template
+    name: "Humidité Absolue Capteur 5"
+    lambda: |-
+      const float R = id(hum5).state;
+      const float T = id(temp5).state;
+      const float abs_humidity = (6.112 * exp((17.67 * T) / (T + 243.5)) * R * 2.1674) / (273.15 + T);
+      return abs_humidity;
+    update_interval: 60s
+
+# Intégration des entités RTE Tempo depuis Home Assistant
+  - platform: homeassistant # Intégration des entités depuis Home Assistant
+    entity_id: sensor.rte_tempo_jour # Entité permettant de récupérer la couleur du jour Tempo
+    name: "RTE Tempo Jour" # Nom de l'entité
+    id: rte_tempo_jour # Identifiant de l'entité
+
+  - platform: homeassistant
+    entity_id: sensor.rte_tempo_demain
+    name: "RTE Tempo Demain"
+    id: rte_tempo_demain
+
+# Configuration de la synchronisation de l'heure via NTP
+time:
+  - platform: sntp # Configuration de la synchronisation de l'heure via NTP
+    id: sntp_time # Identifiant de la synchronisation de l'heure
+    servers: # Serveurs NTP pour la synchronisation de l'heure
+      - 0.pool.ntp.org # Serveur NTP 1
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    update_interval: 60s # Intervalle de mise à jour de l'heure
+
+# Configuration des relais
+switch:
+  - platform: gpio # Configuration des relais
+    pin: D6 # Broche GPIO à laquelle est connecté le relais
+    name: "Relais 1" # Nom du relais
+    id: relais1 # Identifiant du relais
+
+  - platform: gpio
+    pin: D7
+    name: "Relais 2"
+    id: relais2
+
+  - platform: gpio
+    pin: D8
+    name: "Relais 3"
+    id: relais3
+
+  - platform: gpio
+    pin: D9
+    name: "Relais 4"
+    id: relais4
+
+  - platform: gpio
+    pin: D10
+    name: "Relais 5"
+    id: relais5
+
+# Automatisation pour allumer ou éteindre les relais en fonction des états des entités
+interval:
+  - interval: 60s
+    then:
+
+    # Condutions pour les heures de jour
+      # Automatisation pour éteindre les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if (now.hour >= 6 && now.hour < 22 && id(rte_tempo_jour).state == "rouge") {
+            id(relais1).turn_off();
+            id(relais2).turn_off();
+            id(relais3).turn_off();
+            id(relais4).turn_off();
+            id(relais5).turn_off();
+          }
+      # Automatisation pour allumer les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if (now.hour >= 6 && now.hour < 22 && id(rte_tempo_jour).state == "blanc") {
+            id(relais1).turn_on();
+            id(relais2).turn_on();
+            id(relais3).turn_on();
+            id(relais4).turn_on();
+            id(relais5).turn_on();
+          }
+      # Automatisation pour allumer les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if (now.hour >= 6 && now.hour < 22 && id(rte_tempo_jour).state == "bleu") {
+            id(relais1).turn_on();
+            id(relais2).turn_on();
+            id(relais3).turn_on();
+            id(relais4).turn_on();
+            id(relais5).turn_on();
+          }
+
+    # Condutions pour les heures de nuit
+      # Automatisation pour éteindre les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if ((now.hour >= 22 || now.hour < 6) && id(rte_tempo_jour).state == "rouge") {
+            id(relais1).turn_on();
+            id(relais2).turn_on();
+            id(relais3).turn_on();
+            id(relais4).turn_on();
+            id(relais5).turn_on();
+          }
+      # Automatisation pour allumer les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if ((now.hour >= 22 || now.hour < 6) && id(rte_tempo_jour).state == "blanc") {
+            id(relais1).turn_on();
+            id(relais2).turn_on();
+            id(relais3).turn_on();
+            id(relais4).turn_on();
+            id(relais5).turn_on();
+          }
+      # Automatisation pour allumer les relais si les conditions sont remplies
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if ((now.hour >= 22 || now.hour < 6) && id(rte_tempo_jour).state == "bleu") {
+            id(relais1).turn_on();
+            id(relais2).turn_on();
+            id(relais3).turn_on();
+            id(relais4).turn_on();
+            id(relais5).turn_on();
+          }
+
+# Configuration du logger, pour afficher les logs de l'ESP
+logger:
+  level: DEBUG
+
+# Configuration de l'API, pour permettre la communication avec l'ESP
+api:
+# Configuration de l'OTA, pour permettre la mise à jour à distance de l'ESP
+ota:
